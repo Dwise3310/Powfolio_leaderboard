@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/advancer", "destination": "/index.html" },
+    { "source": "/advancer/", "destination": "/index.html" }
+  ]
+}
