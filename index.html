@@ -310,14 +310,18 @@
 
   <script>
     // ============================================================================
-    // 1. ROUTE DETECTION RUNS FIRST (Never blocked by Supabase initialization)
-    // Supports `/advancer`, `/#advancer`, and `/?advancer`
+    // 1. ROUTE DETECTION (Supports `/advancer`, `/advancer.html`, `/#advancer`, `/?advancer`)
     // ============================================================================
     function isAdvancerRoute() {
       const path = window.location.pathname.toLowerCase().replace(/\/+$/, '');
       const hash = window.location.hash.toLowerCase().replace(/^#\/?/, '');
       const search = window.location.search.toLowerCase();
-      return path.endsWith('/advancer') || hash === 'advancer' || search.includes('advancer');
+      return (
+        path.endsWith('/advancer') ||
+        path.endsWith('/advancer.html') ||
+        hash === 'advancer' ||
+        search.includes('advancer')
+      );
     }
 
     function syncRouteView() {
@@ -328,40 +332,21 @@
       return onAdvancer;
     }
 
-    // Switch view immediately before Supabase loads
     syncRouteView();
     window.addEventListener('hashchange', () => init());
 
     // ============================================================================
-    // 2. SUPABASE CREDENTIALS (PASTE YOUR REAL KEYS BELOW)
+    // 2. YOUR SUPABASE CREDENTIALS (WIRED IN)
     // ============================================================================
-    const SUPABASE_URL = "YOUR_SUPABASE_URL";
-    const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
+    const SUPABASE_URL = "https://tqdqigawoxqlqqnjddyy.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRxZHFpZ2F3b3hxbHFxbmpkZHl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3Nzk0MzUsImV4cCI6MjEwODM1NTQzNX0.pBar0frUPunJ_ypdQTRmoQ9kIAVjXcyDP4BYT6OPOic";
 
-    let sb = null;
-    try {
-      if (SUPABASE_URL.startsWith('http')) {
-        sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-      }
-    } catch (err) {
-      console.error("Supabase init error:", err);
-    }
-
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     let cachedTesters = [];
     let isSessionActive = false;
 
     async function init() {
       const onAdvancer = syncRouteView();
-
-      if (!sb) {
-        const msg = "Paste your real SUPABASE_URL and SUPABASE_ANON_KEY into index.html";
-        document.getElementById('publicLeaderboardRows').innerHTML =
-          `<div class="py-12 px-4 text-center text-xs font-mono text-rose-400">${msg}</div>`;
-        const errEl = document.getElementById('loginError');
-        errEl.textContent = msg;
-        errEl.classList.remove('hidden');
-        return;
-      }
 
       if (onAdvancer) {
         const { data: { session } } = await sb.auth.getSession();
@@ -389,7 +374,6 @@
     }
 
     async function fetchLeaderboard(animateIcon) {
-      if (!sb) return;
       const icon = document.getElementById('refreshIcon');
       if (animateIcon && icon) icon.classList.add('spin');
 
@@ -502,7 +486,6 @@
 
     async function handleLogin(e) {
       e.preventDefault();
-      if (!sb) return;
       const email = document.getElementById('adminEmail').value.trim();
       const password = document.getElementById('adminPassword').value;
       const errEl = document.getElementById('loginError');
@@ -521,7 +504,7 @@
     }
 
     async function handleLogout() {
-      if (sb) await sb.auth.signOut();
+      await sb.auth.signOut();
     }
 
     function loadTesterIntoForm(id) {
@@ -549,7 +532,6 @@
 
     async function saveTester(e) {
       e.preventDefault();
-      if (!sb) return;
       const btn = document.getElementById('saveBtn');
       btn.textContent = 'Saving...';
 
@@ -582,7 +564,6 @@
     }
 
     async function deleteTester() {
-      if (!sb) return;
       const id = document.getElementById('testerId').value;
       if (!id || !confirm('Remove this hunter permanently?')) return;
       const { error } = await sb.from('testers').delete().eq('id', id);
